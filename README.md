@@ -2,7 +2,7 @@ IEEE 802.15.4 AES Helper
 ======
 
 
-Bulding 
+Building 
 ======
 No installation is required. To build fabric, you need 
 Java 6 or higher and Maven 2 or higher (http://maven.apache.org/). 
