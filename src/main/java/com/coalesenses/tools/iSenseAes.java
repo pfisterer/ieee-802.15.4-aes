@@ -25,7 +25,6 @@ package com.coalesenses.tools;
 
 import java.security.Security;
 
-import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.modes.CCMBlockCipher;
@@ -35,60 +34,108 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Preconditions;
+
+/**
+ * This class performs Authenticated Encryption with Associated Data (AEAD) according to the IEEE 802.15.4 standard.
+ */
 public class iSenseAes {
 
     private static final Logger log = LoggerFactory.getLogger(iSenseAes.class);
 
-    KeyParameter keyParameter = null;
+    private final static int MESSAGE_AUTHENTICATION_CODE_LENGTH = 4;
 
-    CCMBlockCipher in2;
+    private KeyParameter key = null;
 
-    long nonce = (int) (Math.random() * 100);
-
-    int macLen = 4;
-
-    public void setKey(byte[] key) {
+    static {
         Security.addProvider(new BouncyCastleProvider());
-
-        BlockCipher c = new AESEngine();
-        in2 = new CCMBlockCipher(c);
-
-        keyParameter = new KeyParameter(key);
     }
 
-    public byte[] encode(byte[] plainText) {
-        nonce += (int) (Math.random() * 100);
-        
-        // log.debug("nonce="+nonce);
-        // nonce = 0x12345678;
-        
-        byte[] buffer = new byte[plainText.length + 8];
-        // AEAD Parameters are, Key, MAC length in bits, Nonce, and Associated text
+    /**
+     * From Wikipedia: CCM mode (Counter with CBC-MAC - Cipher Block Chaining Message Authentication Code) is a mode of
+     * operation for cryptographic block ciphers. It is an authenticated encryption algorithm designed to provide both
+     * authentication and confidentiality. CCM mode is only defined for block ciphers with a block length of 128 bits.
+     * In RFC 3610, it is defined for use with AES.
+     */
+    private CCMBlockCipher ccmBlockCipher;
+
+    /** A cryptographic nonce (number used once). */
+    private long randomlyIncreasedNonce = (int) (Math.random() * 100);
+
+    
+    public iSenseAes() {
+        super();
+    }
+    
+    public iSenseAes(iSenseAes128BitKey key) {
+        super();
+        setKey(key);
+    }
+
+    /**
+     * Set the 128 Bit (16 byte) AES key to be used for encryption.
+     * 
+     * @param aesKey
+     */
+    public void setKey(iSenseAes128BitKey aesKey) {
+        Preconditions.checkNotNull(aesKey);
+
+        ccmBlockCipher = new CCMBlockCipher(new AESEngine());
+        key = aesKey.getAsKeyParameter();
+    }
+
+    /** Encode the payload and choose a random nonce
+     * 
+     * @param payload
+     * @return
+     */
+    public byte[] encodeWithRandomNonce(byte[] payload) {
+        randomlyIncreasedNonce += (int) (Math.random() * 100);
+        return encode(payload, randomlyIncreasedNonce);
+    }
+
+    /** Encode the payload with the given nonce
+     * 
+     * @param payload
+     * @return
+     */
+    public byte[] encode(byte[] payload, long currentNonce) {
+        Preconditions.checkNotNull(payload, "Payload is null");
+        Preconditions.checkNotNull(key, "No key for encryption supplied");
+
+        byte[] buffer = new byte[payload.length + 8];
+
         byte[] n = new byte[13];
         n[0] = 0;
-        n[1] = (byte) ((nonce >> 24) & 0xFF);
-        n[2] = (byte) ((nonce >> 16) & 0xFF);
-        n[3] = (byte) ((nonce >> 8) & 0xFF);
-        n[4] = (byte) ((nonce) & 0xFF);
-        n[5] = (byte) ((nonce >> 24) & 0xFF);
-        n[6] = (byte) ((nonce >> 16) & 0xFF);
-        n[7] = (byte) ((nonce >> 8) & 0xFF);
-        n[8] = (byte) ((nonce) & 0xFF);
-        n[9] = (byte) ((nonce >> 24) & 0xFF);
-        n[10] = (byte) ((nonce >> 16) & 0xFF);
-        n[11] = (byte) ((nonce >> 8) & 0xFF);
-        n[12] = (byte) ((nonce) & 0xFF);
+        n[1] = (byte) ((currentNonce >> 24) & 0xFF);
+        n[2] = (byte) ((currentNonce >> 16) & 0xFF);
+        n[3] = (byte) ((currentNonce >> 8) & 0xFF);
+        n[4] = (byte) ((currentNonce) & 0xFF);
+        n[5] = (byte) ((currentNonce >> 24) & 0xFF);
+        n[6] = (byte) ((currentNonce >> 16) & 0xFF);
+        n[7] = (byte) ((currentNonce >> 8) & 0xFF);
+        n[8] = (byte) ((currentNonce) & 0xFF);
+        n[9] = (byte) ((currentNonce >> 24) & 0xFF);
+        n[10] = (byte) ((currentNonce >> 16) & 0xFF);
+        n[11] = (byte) ((currentNonce >> 8) & 0xFF);
+        n[12] = (byte) ((currentNonce) & 0xFF);
 
-        AEADParameters params = new AEADParameters(keyParameter, macLen * 8, n, null);
-        // true for encryption mode
-        in2.init(true, params);
+        // AEAD Parameters are, Key, MAC length in bits, Nonce, and Associated text
+        AEADParameters params = new AEADParameters(key, MESSAGE_AUTHENTICATION_CODE_LENGTH * 8, n, null);
 
-        // do the encryption and authentication, input, input offset (8 bytes are Authenticated data), length of text to
-        // encryption, out put buffer, output offset
-        in2.processBytes(plainText, 0, plainText.length, buffer, 0);
-        
+        // True for encryption mode
+        ccmBlockCipher.init(true, params);
+
+        // Do the encryption and authentication. Parameters:
+        // - input
+        // - input offset (8 bytes are Authenticated data)
+        // - length of text to encrypt
+        // - output buffer
+        // - output offset
+        ccmBlockCipher.processBytes(payload, 0, payload.length, buffer, 0);
+
         try {
-            in2.doFinal(buffer, 0);
+            ccmBlockCipher.doFinal(buffer, 0);
         } catch (IllegalStateException e) {
             log.error("" + e, e);
         } catch (InvalidCipherTextException e) {
@@ -103,31 +150,39 @@ public class iSenseAes {
         return buffer;
     }
 
+    /** Decode the buffer
+     * 
+     * @param cypherText
+     * @return
+     */
     public byte[] decode(byte[] cypherText) {
         byte[] n = new byte[13];
-        byte[] buffer = new byte[cypherText.length - 4 - macLen];
+        byte[] buffer = new byte[cypherText.length - 4 - MESSAGE_AUTHENTICATION_CODE_LENGTH];
+
         n[0] = 0;
+
         System.arraycopy(cypherText, cypherText.length - 4, n, 1, 4);
         System.arraycopy(cypherText, cypherText.length - 4, n, 5, 4);
         System.arraycopy(cypherText, cypherText.length - 4, n, 9, 4);
 
-        AEADParameters params = new AEADParameters(keyParameter, macLen * 8, n, null);
+        AEADParameters params = new AEADParameters(key, MESSAGE_AUTHENTICATION_CODE_LENGTH * 8, n, null);
+
         // true for encryption mode
-        in2.init(false, params);
-        in2.processBytes(cypherText, 0, cypherText.length - 4, buffer, 0);
+        ccmBlockCipher.init(false, params);
+        ccmBlockCipher.processBytes(cypherText, 0, cypherText.length - 4, buffer, 0);
 
         try {
-            in2.doFinal(buffer, 0);
+            ccmBlockCipher.doFinal(buffer, 0);
             return buffer;
-            
+
         } catch (IllegalStateException e) {
             log.warn("Illegal state, resetting: " + e, e);
-            in2.reset();
+            ccmBlockCipher.reset();
             return null;
-            
+
         } catch (InvalidCipherTextException e) {
             log.warn("Invalid cipher, resetting: " + e, e);
-            in2.reset();
+            ccmBlockCipher.reset();
             return null;
         }
 
