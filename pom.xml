@@ -112,4 +112,8 @@
 
 	</distributionManagement>
 
+	<scm>
+		<connection>scm:git:https://pfisterer@github.com/pfisterer/ieee-802.15.4-aes</connection>
+	</scm>
+
 </project>
