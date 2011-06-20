@@ -3,7 +3,7 @@
 
 	<groupId>com.coalesenses</groupId>
 	<artifactId>ieee-802.15.4-aes</artifactId>
-	<version>0.2</version>
+	<version>0.3-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>IEEE 802.15.4 AES Helper</name>
