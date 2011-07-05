@@ -46,7 +46,7 @@ public class iSenseAes128BitKey {
         this.aes128BitKey = aes128BitKey;
     }
 
-    public KeyParameter getAsKeyParameter() {
+    public KeyParameter asKeyParameter() {
         return new KeyParameter(aes128BitKey);
     }
 

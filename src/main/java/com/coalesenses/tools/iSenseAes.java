@@ -81,7 +81,7 @@ public class iSenseAes {
         Preconditions.checkNotNull(aesKey);
 
         ccmBlockCipher = new CCMBlockCipher(new AESEngine());
-        key = aesKey.getAsKeyParameter();
+        key = aesKey.asKeyParameter();
     }
 
     /** Encode the payload and choose a random nonce
