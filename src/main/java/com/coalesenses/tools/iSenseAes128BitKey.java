@@ -27,8 +27,17 @@ import org.bouncycastle.crypto.params.KeyParameter;
 
 import com.google.common.base.Preconditions;
 
+import java.util.Arrays;
+
 public class iSenseAes128BitKey {
+
     byte[] aes128BitKey;
+
+	/**
+	 * Constructor for use with reflection libraries.
+	 */
+	protected iSenseAes128BitKey() {
+	}
 
     public iSenseAes128BitKey(byte[] aes128BitKey) {
         Preconditions.checkNotNull(aes128BitKey);
@@ -56,4 +65,26 @@ public class iSenseAes128BitKey {
         this.aes128BitKey = aes128BitKey;
     }
 
+	@Override
+	public boolean equals(final Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+
+		final iSenseAes128BitKey that = (iSenseAes128BitKey) o;
+
+		if (!Arrays.equals(aes128BitKey, that.aes128BitKey)) {
+			return false;
+		}
+
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		return Arrays.hashCode(aes128BitKey);
+	}
 }
