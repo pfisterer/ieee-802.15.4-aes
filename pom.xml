@@ -3,7 +3,7 @@
 
 	<groupId>com.coalesenses</groupId>
 	<artifactId>ieee-802.15.4-aes</artifactId>
-	<version>0.2-SNAPSHOT</version>
+	<version>0.4-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>IEEE 802.15.4 AES Helper</name>
@@ -68,7 +68,10 @@
 			<artifactId>tr.util</artifactId>
 			<version>0.6.1</version>
 		</dependency>
-
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.6.4</version>
+		</dependency>
 	</dependencies>
 
 	<repositories>

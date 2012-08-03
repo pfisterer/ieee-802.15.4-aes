@@ -25,17 +25,24 @@ package com.coalesenses.tools;
 
 import org.bouncycastle.crypto.params.KeyParameter;
 
-import com.google.common.base.Preconditions;
+import java.util.Arrays;
 
 public class iSenseAes128BitKey {
+
     byte[] aes128BitKey;
 
     public iSenseAes128BitKey(byte[] aes128BitKey) {
-        Preconditions.checkNotNull(aes128BitKey);
-        Preconditions.checkArgument(aes128BitKey.length == 16, "Key length must be 16");
 
-        this.aes128BitKey = aes128BitKey;
-    }
+		if (aes128BitKey == null) {
+			throw new IllegalArgumentException("AES key is null!");
+		}
+
+		if (aes128BitKey.length != 16) {
+			throw new IllegalArgumentException("AES key length must be 16");
+		}
+
+		this.aes128BitKey = aes128BitKey;
+	}
 
     public KeyParameter getAsKeyParameter() {
         return new KeyParameter(aes128BitKey);

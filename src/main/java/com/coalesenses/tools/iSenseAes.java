@@ -34,8 +34,6 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Preconditions;
-
 /**
  * This class performs Authenticated Encryption with Associated Data (AEAD) according to the IEEE 802.15.4 standard.
  */
@@ -78,11 +76,14 @@ public class iSenseAes {
      * @param aesKey
      */
     public void setKey(iSenseAes128BitKey aesKey) {
-        Preconditions.checkNotNull(aesKey);
 
-        ccmBlockCipher = new CCMBlockCipher(new AESEngine());
-        key = aesKey.getAsKeyParameter();
-    }
+		if (aesKey == null) {
+			throw new NullPointerException();
+		}
+
+		ccmBlockCipher = new CCMBlockCipher(new AESEngine());
+		key = aesKey.asKeyParameter();
+	}
 
     /** Encode the payload and choose a random nonce
      * 
@@ -100,55 +101,61 @@ public class iSenseAes {
      * @return
      */
     public byte[] encode(byte[] payload, long currentNonce) {
-        Preconditions.checkNotNull(payload, "Payload is null");
-        Preconditions.checkNotNull(key, "No key for encryption supplied");
 
-        byte[] buffer = new byte[payload.length + 8];
+		if (payload == null) {
+			throw new NullPointerException("Payload is null");
+		}
 
-        byte[] n = new byte[13];
-        n[0] = 0;
-        n[1] = (byte) ((currentNonce >> 24) & 0xFF);
-        n[2] = (byte) ((currentNonce >> 16) & 0xFF);
-        n[3] = (byte) ((currentNonce >> 8) & 0xFF);
-        n[4] = (byte) ((currentNonce) & 0xFF);
-        n[5] = (byte) ((currentNonce >> 24) & 0xFF);
-        n[6] = (byte) ((currentNonce >> 16) & 0xFF);
-        n[7] = (byte) ((currentNonce >> 8) & 0xFF);
-        n[8] = (byte) ((currentNonce) & 0xFF);
-        n[9] = (byte) ((currentNonce >> 24) & 0xFF);
-        n[10] = (byte) ((currentNonce >> 16) & 0xFF);
-        n[11] = (byte) ((currentNonce >> 8) & 0xFF);
-        n[12] = (byte) ((currentNonce) & 0xFF);
+		if (key == null) {
+			throw new NullPointerException("No key for encryption supplied");
+		}
 
-        // AEAD Parameters are, Key, MAC length in bits, Nonce, and Associated text
-        AEADParameters params = new AEADParameters(key, MESSAGE_AUTHENTICATION_CODE_LENGTH * 8, n, null);
+		byte[] buffer = new byte[payload.length + 8];
 
-        // True for encryption mode
-        ccmBlockCipher.init(true, params);
+		byte[] n = new byte[13];
+		n[0] = 0;
+		n[1] = (byte) ((currentNonce >> 24) & 0xFF);
+		n[2] = (byte) ((currentNonce >> 16) & 0xFF);
+		n[3] = (byte) ((currentNonce >> 8) & 0xFF);
+		n[4] = (byte) ((currentNonce) & 0xFF);
+		n[5] = (byte) ((currentNonce >> 24) & 0xFF);
+		n[6] = (byte) ((currentNonce >> 16) & 0xFF);
+		n[7] = (byte) ((currentNonce >> 8) & 0xFF);
+		n[8] = (byte) ((currentNonce) & 0xFF);
+		n[9] = (byte) ((currentNonce >> 24) & 0xFF);
+		n[10] = (byte) ((currentNonce >> 16) & 0xFF);
+		n[11] = (byte) ((currentNonce >> 8) & 0xFF);
+		n[12] = (byte) ((currentNonce) & 0xFF);
 
-        // Do the encryption and authentication. Parameters:
-        // - input
-        // - input offset (8 bytes are Authenticated data)
-        // - length of text to encrypt
-        // - output buffer
-        // - output offset
-        ccmBlockCipher.processBytes(payload, 0, payload.length, buffer, 0);
+		// AEAD Parameters are, Key, MAC length in bits, Nonce, and Associated text
+		AEADParameters params = new AEADParameters(key, MESSAGE_AUTHENTICATION_CODE_LENGTH * 8, n, null);
 
-        try {
-            ccmBlockCipher.doFinal(buffer, 0);
-        } catch (IllegalStateException e) {
-            log.error("" + e, e);
-        } catch (InvalidCipherTextException e) {
-            log.error("" + e, e);
-        }
+		// True for encryption mode
+		ccmBlockCipher.init(true, params);
 
-        buffer[buffer.length - 4] = n[1];
-        buffer[buffer.length - 3] = n[2];
-        buffer[buffer.length - 2] = n[3];
-        buffer[buffer.length - 1] = n[4];
+		// Do the encryption and authentication. Parameters:
+		// - input
+		// - input offset (8 bytes are Authenticated data)
+		// - length of text to encrypt
+		// - output buffer
+		// - output offset
+		ccmBlockCipher.processBytes(payload, 0, payload.length, buffer, 0);
 
-        return buffer;
-    }
+		try {
+			ccmBlockCipher.doFinal(buffer, 0);
+		} catch (IllegalStateException e) {
+			log.error("" + e, e);
+		} catch (InvalidCipherTextException e) {
+			log.error("" + e, e);
+		}
+
+		buffer[buffer.length - 4] = n[1];
+		buffer[buffer.length - 3] = n[2];
+		buffer[buffer.length - 2] = n[3];
+		buffer[buffer.length - 1] = n[4];
+
+		return buffer;
+	}
 
     /** Decode the buffer
      * 
