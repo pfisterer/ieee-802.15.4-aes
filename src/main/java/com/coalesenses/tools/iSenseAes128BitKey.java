@@ -25,13 +25,11 @@ package com.coalesenses.tools;
 
 import org.bouncycastle.crypto.params.KeyParameter;
 
-import java.util.Arrays;
-
 public class iSenseAes128BitKey {
 
-    byte[] aes128BitKey;
+	byte[] aes128BitKey;
 
-    public iSenseAes128BitKey(byte[] aes128BitKey) {
+	public iSenseAes128BitKey(byte[] aes128BitKey) {
 
 		if (aes128BitKey == null) {
 			throw new IllegalArgumentException("AES key is null!");
@@ -44,23 +42,23 @@ public class iSenseAes128BitKey {
 		this.aes128BitKey = aes128BitKey;
 	}
 
-    public KeyParameter getAsKeyParameter() {
-        return new KeyParameter(aes128BitKey);
-    }
+	public KeyParameter getAsKeyParameter() {
+		return new KeyParameter(aes128BitKey);
+	}
 
-    /**
-     * @return the aes128BitKey
-     */
-    public byte[] getAes128BitKey() {
-        return aes128BitKey;
-    }
+	/**
+	 * @return the aes128BitKey
+	 */
+	public byte[] getAes128BitKey() {
+		return aes128BitKey;
+	}
 
-    /**
-     * @param aes128BitKey
-     *            the aes128BitKey to set
-     */
-    public void setAes128BitKey(byte[] aes128BitKey) {
-        this.aes128BitKey = aes128BitKey;
-    }
+	/**
+	 * @param aes128BitKey
+	 * 		the aes128BitKey to set
+	 */
+	public void setAes128BitKey(byte[] aes128BitKey) {
+		this.aes128BitKey = aes128BitKey;
+	}
 
 }
