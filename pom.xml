@@ -41,14 +41,6 @@
 				</configuration>
 			</plugin>
 		</plugins>
-
-		<extensions>
-			<extension>
-				<groupId>org.apache.maven.wagon</groupId>
-				<artifactId>wagon-ssh-external</artifactId>
-				<version>1.0</version>
-			</extension>
-		</extensions>
 	</build>
 
 	<dependencies>
@@ -60,7 +52,7 @@
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>[1.6,1.7)</version>
+			<version>[1.7,1.8)</version>
 		</dependency>
 	</dependencies>
 
